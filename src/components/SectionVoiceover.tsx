@@ -1,66 +1,68 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface SubtitleCue {
-    time: number; // seconds
+    time: number;
     text: string;
 }
 
 interface SectionVoiceoverProps {
+    audioRef: React.RefObject<HTMLAudioElement | null>;
     audioSrc: string;
     subtitles: SubtitleCue[];
     isActive: boolean;
+    globalMuted: boolean;
 }
 
 /**
- * Plays a voiceover when isActive becomes true (fade in).
- * Pauses with fade out when leaving.
- * Resets + replays every time the section is re-entered.
- * Displays synced subtitles at the bottom center.
+ * Manages voiceover playback for a single section.
+ * Audio element is created here but ref is shared with parent for HUD control.
  */
-export function SectionVoiceover({ audioSrc, subtitles, isActive }: SectionVoiceoverProps) {
-    const audioRef = useRef<HTMLAudioElement>(null);
-    const fadeRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+export function SectionVoiceover({ audioRef, audioSrc, subtitles, isActive, globalMuted }: SectionVoiceoverProps) {
     const [currentText, setCurrentText] = useState("");
+
+    // Mute/unmute based on global toggle
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (audio) audio.muted = globalMuted;
+    }, [globalMuted, audioRef]);
 
     // Play / pause with fade
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio) return;
 
+        let fadeInterval: ReturnType<typeof setInterval> | undefined;
+
         if (isActive) {
-            // Reset and play from start
             audio.currentTime = 0;
             audio.volume = 0;
             audio.play().catch(() => { });
 
             // Fade in over 1.5s
-            clearInterval(fadeRef.current);
-            fadeRef.current = setInterval(() => {
+            fadeInterval = setInterval(() => {
                 if (audio.volume < 0.95) {
                     audio.volume = Math.min(audio.volume + 0.05, 1);
                 } else {
                     audio.volume = 1;
-                    clearInterval(fadeRef.current);
+                    clearInterval(fadeInterval);
                 }
-            }, 75); // 20 steps × 75ms ≈ 1.5s
+            }, 75);
         } else {
             // Fade out over 0.8s
-            clearInterval(fadeRef.current);
-            fadeRef.current = setInterval(() => {
+            fadeInterval = setInterval(() => {
                 if (audio.volume > 0.05) {
                     audio.volume = Math.max(audio.volume - 0.05, 0);
                 } else {
                     audio.volume = 0;
                     audio.pause();
-                    clearInterval(fadeRef.current);
+                    clearInterval(fadeInterval);
                 }
-            }, 40); // 20 steps × 40ms ≈ 0.8s
-
+            }, 40);
             setCurrentText("");
         }
 
-        return () => clearInterval(fadeRef.current);
-    }, [isActive]);
+        return () => clearInterval(fadeInterval);
+    }, [isActive, audioRef]);
 
     // Subtitle sync
     useEffect(() => {
@@ -87,12 +89,11 @@ export function SectionVoiceover({ audioSrc, subtitles, isActive }: SectionVoice
             audio.removeEventListener("timeupdate", onTimeUpdate);
             audio.removeEventListener("ended", onEnded);
         };
-    }, [isActive, subtitles]);
+    }, [isActive, subtitles, audioRef]);
 
     return (
         <>
             <audio ref={audioRef} src={audioSrc} preload="auto" />
-            {/* Subtitle bar */}
             {currentText && (
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 max-w-xl w-[90%] text-center pointer-events-none">
                     <div className="inline-block bg-black/70 backdrop-blur-sm px-5 py-2.5 rounded-lg">

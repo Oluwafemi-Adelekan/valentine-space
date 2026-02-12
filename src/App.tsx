@@ -8,6 +8,7 @@ import { MemoriesTicker } from "./components/MemoriesTicker";
 import { LiveCam } from "./components/LiveCam";
 import { AudioPlayer } from "./components/AudioPlayer";
 import { SectionVoiceover } from "./components/SectionVoiceover";
+import { VoiceoverHUD } from "./components/VoiceoverHUD";
 
 // Audio imports
 import heroAudio from "./assets/Hero.mp3";
@@ -58,12 +59,27 @@ const carouselSubs = [
     { time: 27, text: "And, um, there are so many more memories to create together. I just feel it." },
 ];
 
+const SECTION_AUDIO = [heroAudio, quoteAudio, guyAudio, carouselAudio];
+const SECTION_SUBS = [heroSubs, quoteSubs, guySubs, carouselSubs];
+
 function App() {
     const [isValentine, setIsValentine] = useState(false);
     const [current, setCurrent] = useState(0);
+    const [globalMuted, setGlobalMuted] = useState(false);
     const isAnimating = useRef(false);
     const deltaAccumulator = useRef(0);
     const accumulatorTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+    // Audio refs for each section voiceover
+    const audioRefs = [
+        useRef<HTMLAudioElement>(null),
+        useRef<HTMLAudioElement>(null),
+        useRef<HTMLAudioElement>(null),
+        useRef<HTMLAudioElement>(null),
+    ];
+
+    // Active audio ref for the HUD
+    const activeAudioRef = audioRefs[current];
 
     const goTo = useCallback((index: number) => {
         const clamped = Math.max(0, Math.min(SECTION_COUNT - 1, index));
@@ -119,9 +135,13 @@ function App() {
         };
     }, [isValentine, current, goTo]);
 
+    const toggleGlobalMute = useCallback(() => {
+        setGlobalMuted(prev => !prev);
+    }, []);
+
     return (
         <div className="bg-black w-full h-screen font-sans text-white overflow-hidden">
-            <AudioPlayer isPlaying={isValentine} />
+            <AudioPlayer isPlaying={isValentine} globalMuted={globalMuted} />
             <AnimatePresence mode="wait">
                 {!isValentine ? (
                     <LandingScreen key="landing" onComplete={() => setIsValentine(true)} />
@@ -134,6 +154,13 @@ function App() {
                         className="w-full h-full relative"
                     >
                         <LiveCam />
+
+                        {/* Cinematic Voiceover HUD */}
+                        <VoiceoverHUD
+                            audioRef={activeAudioRef}
+                            globalMuted={globalMuted}
+                            onToggleMute={toggleGlobalMute}
+                        />
 
                         {/* Section Dot Indicators */}
                         <nav className="fixed right-6 top-1/2 -translate-y-1/2 z-[60] flex flex-col gap-4">
@@ -166,29 +193,21 @@ function App() {
                             className="w-full transition-transform duration-700 ease-in-out will-change-transform"
                             style={{ transform: `translateY(-${current * 100}vh)` }}
                         >
-                            {/* HERO */}
-                            <div className="h-screen w-full relative">
-                                <MainStage />
-                                <SectionVoiceover audioSrc={heroAudio} subtitles={heroSubs} isActive={current === 0} />
-                            </div>
-
-                            {/* QUOTE */}
-                            <div className="h-screen w-full relative">
-                                <QuoteSection />
-                                <SectionVoiceover audioSrc={quoteAudio} subtitles={quoteSubs} isActive={current === 1} />
-                            </div>
-
-                            {/* GUY */}
-                            <div className="h-screen w-full relative">
-                                <GuySection />
-                                <SectionVoiceover audioSrc={guyAudio} subtitles={guySubs} isActive={current === 2} />
-                            </div>
-
-                            {/* MEMORIES */}
-                            <div className="h-screen w-full relative">
-                                <MemoriesTicker />
-                                <SectionVoiceover audioSrc={carouselAudio} subtitles={carouselSubs} isActive={current === 3} />
-                            </div>
+                            {SECTION_AUDIO.map((src, i) => (
+                                <div key={i} className="h-screen w-full relative">
+                                    {i === 0 && <MainStage />}
+                                    {i === 1 && <QuoteSection />}
+                                    {i === 2 && <GuySection />}
+                                    {i === 3 && <MemoriesTicker />}
+                                    <SectionVoiceover
+                                        audioRef={audioRefs[i]}
+                                        audioSrc={src}
+                                        subtitles={SECTION_SUBS[i]}
+                                        isActive={current === i}
+                                        globalMuted={globalMuted}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     </motion.div>
                 )}
