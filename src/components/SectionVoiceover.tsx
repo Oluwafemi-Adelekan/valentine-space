@@ -19,7 +19,7 @@ interface SectionVoiceoverProps {
  */
 export function SectionVoiceover({ audioSrc, subtitles, isActive }: SectionVoiceoverProps) {
     const audioRef = useRef<HTMLAudioElement>(null);
-    const fadeRef = useRef<ReturnType<typeof setInterval>>();
+    const fadeRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
     const [currentText, setCurrentText] = useState("");
 
     // Play / pause with fade

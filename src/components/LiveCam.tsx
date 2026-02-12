@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import liveCamVideo from "../assets/Live cam video.mp4";
 
 export function LiveCam() {

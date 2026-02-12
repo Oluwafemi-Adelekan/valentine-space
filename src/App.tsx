@@ -63,7 +63,7 @@ function App() {
     const [current, setCurrent] = useState(0);
     const isAnimating = useRef(false);
     const deltaAccumulator = useRef(0);
-    const accumulatorTimer = useRef<ReturnType<typeof setTimeout>>();
+    const accumulatorTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     const goTo = useCallback((index: number) => {
         const clamped = Math.max(0, Math.min(SECTION_COUNT - 1, index));
