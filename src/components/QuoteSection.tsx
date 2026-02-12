@@ -14,7 +14,7 @@ export function QuoteSection() {
             {/* Quote Content — UnifrakturCook font, pink color */}
             <div className="max-w-4xl px-8 text-center relative z-10 mix-blend-screen">
                 <motion.div
-                    className="text-3xl md:text-5xl font-unifraktur leading-relaxed cursor-default text-pink-400"
+                    className="text-3xl md:text-5xl font-unifraktur leading-relaxed cursor-default text-white"
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true }}
