@@ -1,5 +1,3 @@
-import { useRef } from "react";
-import { motion } from "framer-motion";
 import heroVideo from "../assets/Hero video.mp4";
 
 export function MainStage() {
