@@ -12,13 +12,6 @@ function formatTime(seconds: number): string {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-/**
- * Cinematic voiceover HUD inspired by Mario Roudil's portfolio.
- * - Vertical playhead line (draggable) progresses left-to-right
- * - Current timecode on the left, total duration on the right
- * - Center PAUSE / PLAY toggle (voiceover only)
- * - Top center SOUND ON / SOUND OFF (all audio)
- */
 export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverHUDProps) {
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
@@ -58,22 +51,34 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
         }
     }, [audioRef]);
 
-    // Scrub: start drag
+    // Scrub helpers
+    const scrubTo = useCallback((clientX: number) => {
+        const audio = audioRef.current;
+        if (!audio || !audio.duration) return;
+        const frac = Math.max(0, Math.min(1, clientX / window.innerWidth));
+        audio.currentTime = frac * audio.duration;
+        setProgress(frac);
+        setCurrentTime(audio.currentTime);
+    }, [audioRef]);
+
+    // Magnetic playhead: on mousedown anywhere on the playhead hit area, start dragging
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
+        e.stopPropagation();
         dragRef.current = true;
         setIsDragging(true);
-        scrubTo(e.clientX);
+        // Snap to current playhead position, don't jump
     }, []);
 
-    // Scrub: move
     useEffect(() => {
         if (!isDragging) return;
 
         const handleMouseMove = (e: MouseEvent) => {
+            e.preventDefault();
             scrubTo(e.clientX);
         };
-        const handleMouseUp = () => {
+        const handleMouseUp = (e: MouseEvent) => {
+            e.preventDefault();
             dragRef.current = false;
             setIsDragging(false);
         };
@@ -84,67 +89,82 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
             window.removeEventListener("mousemove", handleMouseMove);
             window.removeEventListener("mouseup", handleMouseUp);
         };
-    }, [isDragging]);
+    }, [isDragging, scrubTo]);
 
-    const scrubTo = (clientX: number) => {
-        const audio = audioRef.current;
-        if (!audio || !audio.duration) return;
-        const frac = Math.max(0, Math.min(1, clientX / window.innerWidth));
-        audio.currentTime = frac * audio.duration;
-        setProgress(frac);
-        setCurrentTime(audio.currentTime);
-    };
+    // Click on the track area to jump
+    const handleTrackClick = useCallback((e: React.MouseEvent) => {
+        scrubTo(e.clientX);
+    }, [scrubTo]);
 
     return (
         <div className="fixed inset-0 z-[55] pointer-events-none select-none">
 
-            {/* ═══ SOUND ON / OFF — top center ═══ */}
-            <button
-                onClick={onToggleMute}
-                className="pointer-events-auto absolute top-6 left-1/2 -translate-x-1/2 text-white/60 hover:text-white text-xs font-mono uppercase tracking-[0.3em] transition-all duration-500 ease-in-out cursor-pointer"
-            >
-                {globalMuted ? "SOUND OFF" : "SOUND ON"}
-            </button>
+            {/* ═══ Top Center: SOUND + PLAY/PAUSE horizontal ═══ */}
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-8 pointer-events-auto">
+                <button
+                    onClick={onToggleMute}
+                    className="text-white/60 hover:text-white text-xs font-mono uppercase tracking-[0.3em] transition-all duration-500 ease-in-out cursor-pointer whitespace-nowrap"
+                >
+                    {globalMuted ? "SOUND OFF" : "SOUND ON"}
+                </button>
+                <button
+                    onClick={togglePlayPause}
+                    className="text-white/60 hover:text-white text-xs font-mono uppercase tracking-[0.3em] transition-all duration-500 ease-in-out cursor-pointer whitespace-nowrap"
+                >
+                    {isPlaying ? "PAUSE" : "PLAY"}
+                </button>
+            </div>
 
             {/* ═══ Current Timecode — left center ═══ */}
             <div className="absolute left-6 top-1/2 -translate-y-1/2 text-white/50 text-xs font-mono tracking-widest tabular-nums transition-all duration-300 ease-in-out">
                 {formatTime(currentTime)}
             </div>
 
-            {/* ═══ Duration — right center ═══ */}
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 text-white/50 text-xs font-mono tracking-widest tabular-nums transition-all duration-300 ease-in-out">
+            {/* ═══ Duration — right center (offset to avoid dot nav) ═══ */}
+            <div className="absolute right-16 top-1/2 -translate-y-1/2 text-white/50 text-xs font-mono tracking-widest tabular-nums transition-all duration-300 ease-in-out">
                 {formatTime(duration)}
             </div>
 
-            {/* ═══ PAUSE / PLAY — center ═══ */}
-            <button
-                onClick={togglePlayPause}
-                className="pointer-events-auto absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/60 hover:text-white text-xs font-mono uppercase tracking-[0.3em] transition-all duration-500 ease-in-out cursor-pointer"
-            >
-                {isPlaying ? "PAUSE" : "PLAY"}
-            </button>
-
-            {/* ═══ Vertical Playhead Line — full height, scrubable ═══ */}
+            {/* ═══ Playhead Track — full width invisible hit area ═══ */}
             <div
-                className="pointer-events-auto absolute top-0 bottom-0 cursor-col-resize group"
+                className="pointer-events-auto absolute top-0 bottom-0 left-0 right-0 cursor-col-resize"
+                style={{ width: "100%", zIndex: -1 }}
+                onClick={handleTrackClick}
+            />
+
+            {/* ═══ Vertical Playhead Line — magnetic, wide hit area ═══ */}
+            <div
+                className="pointer-events-auto absolute top-0 bottom-0 group"
                 style={{
                     left: `${progress * 100}%`,
-                    transition: isDragging ? "none" : "left 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)",
-                    width: "20px",
-                    marginLeft: "-10px",
+                    transition: isDragging ? "none" : "left 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                    width: "48px",
+                    marginLeft: "-24px",
+                    cursor: isDragging ? "grabbing" : "grab",
                 }}
                 onMouseDown={handleMouseDown}
             >
                 {/* The visible line */}
                 <div
-                    className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 transition-all duration-300 ease-in-out"
+                    className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 transition-all duration-500 ease-in-out"
                     style={{
                         width: isDragging ? "2px" : "1px",
-                        backgroundColor: isDragging ? "rgba(244,114,182,0.8)" : "rgba(255,255,255,0.2)",
+                        backgroundColor: isDragging
+                            ? "rgba(244, 114, 182, 0.9)"
+                            : "rgba(255, 255, 255, 0.15)",
                     }}
                 />
-                {/* Hover glow */}
-                <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[3px] bg-white/0 group-hover:bg-white/30 transition-all duration-300 ease-in-out" />
+                {/* Hover glow — magnetic feel */}
+                <div
+                    className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out"
+                    style={{
+                        width: "4px",
+                        backgroundColor: "rgba(244, 114, 182, 0.4)",
+                        boxShadow: "0 0 12px 4px rgba(244, 114, 182, 0.15)",
+                    }}
+                />
+                {/* Invisible magnetic grab zone */}
+                <div className="absolute inset-0" />
             </div>
         </div>
     );

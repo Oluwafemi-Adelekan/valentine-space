@@ -163,7 +163,7 @@ function App() {
                         />
 
                         {/* Section Dot Indicators */}
-                        <nav className="fixed right-6 top-1/2 -translate-y-1/2 z-[60] flex flex-col gap-4">
+                        <nav className="fixed right-6 bottom-8 z-[60] flex flex-col gap-4">
                             {SECTION_LABELS.map((label, i) => (
                                 <button
                                     key={label}
