@@ -1,0 +1,59 @@
+/* ============  Volumetric Smoke  ============ */
+.smoke {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200vw;
+    height: 200vh;
+    transform: translate(-50%, -50%);
+    filter: blur(80px);
+    pointer-events: none;
+    /* NOTE: removed opacity:0 — it was hiding the smoke entirely */
+}
+
+.smoke-1 {
+    animation: smokeFloat 12s infinite alternate ease-in-out;
+    background: radial-gradient(ellipse at center, rgba(236, 72, 153, 0.25) 0%, transparent 60%);
+}
+
+.smoke-2 {
+    animation: smokeFloat 18s infinite alternate-reverse ease-in-out;
+    background: radial-gradient(ellipse at center, rgba(88, 28, 135, 0.25) 0%, transparent 60%);
+    width: 160vw;
+    height: 160vh;
+}
+
+.smoke-3 {
+    animation: smokeRotate 25s infinite linear;
+    background: conic-gradient(from 0deg, transparent 0%, rgba(255, 255, 255, 0.06) 25%, transparent 50%, rgba(236, 72, 153, 0.06) 75%, transparent 100%);
+    width: 120vw;
+    height: 120vh;
+}
+
+@keyframes smokeFloat {
+    0% {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: translate(-45%, -55%) scale(1.15);
+        opacity: 0.5;
+    }
+}
+
+@keyframes smokeRotate {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+        opacity: 0.6;
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+        opacity: 0.6;
+    }
+}

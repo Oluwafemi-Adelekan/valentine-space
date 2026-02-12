@@ -1,0 +1,27 @@
+.petal {
+    position: absolute;
+    top: -10px;
+    width: 1rem;
+    height: 1rem;
+    background: rgba(244, 114, 182, 0.6);
+    /* Pink-400 */
+    border-radius: 50% 0 50% 0;
+    filter: blur(1px);
+    animation: fall linear infinite;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-10vh) rotate(0deg) translateX(0);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(110vh) rotate(720deg) translateX(20px);
+        opacity: 0;
+    }
+}
