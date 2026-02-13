@@ -1,3 +1,5 @@
+import liveCamVideo from "../assets/livecam-video.mp4";
+
 export function LiveCam() {
     return (
         <div className="fixed top-4 right-4 z-50 w-32 h-40 md:w-32 md:h-40 bg-gray-900 rounded-lg overflow-hidden border border-white/20 shadow-2xl
@@ -7,9 +9,9 @@ export function LiveCam() {
                 <span className="text-[10px] font-mono text-white/80 uppercase tracking-wider">REC</span>
             </div>
 
-            {/* Video Loop — served from /public for reliable deploy */}
+            {/* Video Loop — imported via Vite for reliable hash/path resolution */}
             <video
-                src="/livecam-video.mp4"
+                src={liveCamVideo}
                 autoPlay
                 loop
                 muted

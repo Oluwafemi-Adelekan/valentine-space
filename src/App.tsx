@@ -111,8 +111,15 @@ function App() {
             touchStartY = e.touches[0].clientY;
         };
         const handleTouchMove = (e: TouchEvent) => {
-            // Prevent native scroll & pull-to-refresh — our section snap handles navigation
-            e.preventDefault();
+            const currentY = e.touches[0].clientY;
+            const isSwipingDown = currentY > touchStartY;
+
+            if (current === 0 && isSwipingDown) {
+                // Allow native behavior (pull-to-refresh) ONLY at top of first section
+                return;
+            }
+            // Block native scroll everywhere else to let our section snap handle navigation
+            if (e.cancelable) e.preventDefault();
         };
         const handleTouchEnd = (e: TouchEvent) => {
             if (isAnimating.current) return;
@@ -148,7 +155,7 @@ function App() {
     }, []);
 
     return (
-        <div className="bg-black w-full h-screen font-sans text-white overflow-hidden">
+        <div className="bg-black w-full h-[100dvh] font-sans text-white overflow-hidden">
             <AudioPlayer isPlaying={isValentine} globalMuted={globalMuted} />
             <AnimatePresence mode="wait">
                 {!isValentine ? (
