@@ -1,17 +1,21 @@
-import heroVideo from "../assets/hero-video.mp4";
-
 export function MainStage() {
     return (
         <div className="relative h-screen w-full overflow-hidden bg-black">
-            {/* Video Background — set to 108%, imported via Vite for reliable hash/path resolution */}
+            {/* Video Background — Streamable embed, scaled to 108% (intentional) */}
             <div className="absolute inset-0">
                 <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none" />
-                <video
-                    src={heroVideo}
-                    autoPlay loop muted playsInline
-                    preload="auto"
-                    className="w-full h-full object-cover"
-                    style={{ transform: "scale(1.08)", transformOrigin: "center center" }}
+                <iframe
+                    src="https://streamable.com/e/0g2x8e?nocontrols=1&autoplay=1&muted=1&loop=1"
+                    allow="autoplay; fullscreen"
+                    allowFullScreen
+                    className="w-full h-full"
+                    style={{
+                        border: "none",
+                        transform: "scale(1.08)",
+                        transformOrigin: "center center",
+                        pointerEvents: "none",
+                    }}
+                    title="Hero video"
                 />
             </div>
 
