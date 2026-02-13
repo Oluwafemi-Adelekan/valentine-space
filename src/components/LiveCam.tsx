@@ -7,12 +7,11 @@ export function LiveCam() {
                 <span className="text-[10px] font-mono text-white/80 uppercase tracking-wider">REC</span>
             </div>
 
-            {/* Video Loop — Google Drive direct, no watermark */}
+            {/* Video Loop — Cloudinary CDN direct */}
             <video
-                src="https://drive.google.com/uc?export=download&id=1Bi-yhchm6jXSBluDlITdS9HewdYBOmTo"
+                src="https://res.cloudinary.com/dinsvbrfd/video/upload/livecam-video_xegcoa.mp4"
                 autoPlay loop muted playsInline
                 preload="auto"
-                crossOrigin="anonymous"
                 className="w-full h-full object-cover opacity-80"
             />
 

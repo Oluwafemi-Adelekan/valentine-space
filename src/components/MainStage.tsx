@@ -1,14 +1,13 @@
 export function MainStage() {
     return (
         <div className="relative h-[100dvh] w-full overflow-hidden bg-black">
-            {/* Video Background — Google Drive direct, scaled to 108% (intentional) */}
+            {/* Video Background — Cloudinary CDN, scaled to 108% (intentional) */}
             <div className="absolute inset-0">
                 <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none" />
                 <video
-                    src="https://drive.google.com/uc?export=download&id=1tUpfsQH_PhN12cIP7pehdo4BPamRUdOG"
+                    src="https://res.cloudinary.com/dinsvbrfd/video/upload/hero-video_z7lvtl.mp4"
                     autoPlay loop muted playsInline
                     preload="auto"
-                    crossOrigin="anonymous"
                     className="w-full h-full object-cover"
                     style={{ transform: "scale(1.08)", transformOrigin: "center center" }}
                 />
