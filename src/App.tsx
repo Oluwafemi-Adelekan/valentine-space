@@ -162,8 +162,8 @@ function App() {
                             onToggleMute={toggleGlobalMute}
                         />
 
-                        {/* Section Dot Indicators */}
-                        <nav className="fixed right-6 bottom-8 z-[60] flex flex-col gap-4">
+                        {/* Section Dot Indicators — top left */}
+                        <nav className="fixed left-6 top-6 z-[60] flex flex-col gap-4">
                             {SECTION_LABELS.map((label, i) => (
                                 <button
                                     key={label}
@@ -181,7 +181,7 @@ function App() {
                                         }}
                                         transition={{ duration: 0.3 }}
                                     />
-                                    <span className="absolute right-8 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                    <span className="absolute left-8 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                                         {label}
                                     </span>
                                 </button>
@@ -196,7 +196,7 @@ function App() {
                             {SECTION_AUDIO.map((src, i) => (
                                 <div key={i} className="h-screen w-full relative">
                                     {i === 0 && <MainStage />}
-                                    {i === 1 && <QuoteSection />}
+                                    {i === 1 && (current === 1 ? <QuoteSection /> : <div className="h-screen w-full bg-black" />)}
                                     {i === 2 && <GuySection />}
                                     {i === 3 && <MemoriesTicker />}
                                     <SectionVoiceover

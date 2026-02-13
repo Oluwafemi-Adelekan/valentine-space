@@ -18,10 +18,28 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
     const [duration, setDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const dragRef = useRef(false);
     const rafRef = useRef<number>(0);
+    const idleTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-    // Poll audio state via rAF for smooth playhead
+    // Auto-hide playhead/timecodes after 5s of no mouse movement
+    useEffect(() => {
+        const handleMouseMove = () => {
+            setIsHovered(true);
+            clearTimeout(idleTimerRef.current);
+            idleTimerRef.current = setTimeout(() => {
+                if (!dragRef.current) setIsHovered(false);
+            }, 2000);
+        };
+        window.addEventListener("mousemove", handleMouseMove);
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+            clearTimeout(idleTimerRef.current);
+        };
+    }, []);
+
+    // Poll audio state via rAF
     const tick = useCallback(() => {
         const audio = audioRef.current;
         if (audio && !dragRef.current) {
@@ -40,7 +58,6 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
         return () => cancelAnimationFrame(rafRef.current);
     }, [tick]);
 
-    // Toggle play/pause (voiceover only)
     const togglePlayPause = useCallback(() => {
         const audio = audioRef.current;
         if (!audio) return;
@@ -51,7 +68,6 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
         }
     }, [audioRef]);
 
-    // Scrub helpers
     const scrubTo = useCallback((clientX: number) => {
         const audio = audioRef.current;
         if (!audio || !audio.duration) return;
@@ -61,28 +77,23 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
         setCurrentTime(audio.currentTime);
     }, [audioRef]);
 
-    // Magnetic playhead: on mousedown anywhere on the playhead hit area, start dragging
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         dragRef.current = true;
         setIsDragging(true);
-        // Snap to current playhead position, don't jump
     }, []);
 
     useEffect(() => {
         if (!isDragging) return;
-
         const handleMouseMove = (e: MouseEvent) => {
             e.preventDefault();
             scrubTo(e.clientX);
         };
-        const handleMouseUp = (e: MouseEvent) => {
-            e.preventDefault();
+        const handleMouseUp = () => {
             dragRef.current = false;
             setIsDragging(false);
         };
-
         window.addEventListener("mousemove", handleMouseMove);
         window.addEventListener("mouseup", handleMouseUp);
         return () => {
@@ -91,60 +102,58 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
         };
     }, [isDragging, scrubTo]);
 
-    // Click on the track area to jump
-    const handleTrackClick = useCallback((e: React.MouseEvent) => {
-        scrubTo(e.clientX);
-    }, [scrubTo]);
+    const controlsVisible = isHovered || isDragging;
 
     return (
-        <div className="fixed inset-0 z-[55] pointer-events-none select-none">
-
-            {/* ═══ Top Center: SOUND + PLAY/PAUSE horizontal ═══ */}
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-8 pointer-events-auto">
+        <>
+            {/* ═══ Top Center: MUTE + PLAY/PAUSE — always visible ═══ */}
+            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[56] flex items-center gap-8 pointer-events-auto">
                 <button
                     onClick={onToggleMute}
-                    className="text-white/60 hover:text-white text-xs font-mono uppercase tracking-[0.3em] transition-all duration-500 ease-in-out cursor-pointer whitespace-nowrap"
+                    className="text-white/70 hover:text-white text-xs font-semibold font-mono uppercase tracking-[0.25em] transition-colors duration-300 cursor-pointer whitespace-nowrap"
                 >
-                    {globalMuted ? "SOUND OFF" : "SOUND ON"}
+                    {globalMuted ? "UNMUTE" : "MUTE"}
                 </button>
                 <button
                     onClick={togglePlayPause}
-                    className="text-white/60 hover:text-white text-xs font-mono uppercase tracking-[0.3em] transition-all duration-500 ease-in-out cursor-pointer whitespace-nowrap"
+                    className="text-white/70 hover:text-white text-xs font-semibold font-mono uppercase tracking-[0.25em] transition-colors duration-300 cursor-pointer whitespace-nowrap"
                 >
                     {isPlaying ? "PAUSE" : "PLAY"}
                 </button>
             </div>
 
-            {/* ═══ Current Timecode — left center ═══ */}
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-white/50 text-xs font-mono tracking-widest tabular-nums transition-all duration-300 ease-in-out">
+            {/* ═══ Current Timecode — left center (hover only) ═══ */}
+            <div
+                className="fixed left-6 top-1/2 -translate-y-1/2 z-[56] text-white/60 text-xs font-semibold font-mono tracking-widest tabular-nums transition-opacity duration-500 ease-in-out pointer-events-none"
+                style={{ opacity: controlsVisible ? 1 : 0 }}
+            >
                 {formatTime(currentTime)}
             </div>
 
-            {/* ═══ Duration — right center (offset to avoid dot nav) ═══ */}
-            <div className="absolute right-16 top-1/2 -translate-y-1/2 text-white/50 text-xs font-mono tracking-widest tabular-nums transition-all duration-300 ease-in-out">
+            {/* ═══ Duration — right center (hover only) ═══ */}
+            <div
+                className="fixed right-16 top-1/2 -translate-y-1/2 z-[56] text-white/60 text-xs font-semibold font-mono tracking-widest tabular-nums transition-opacity duration-500 ease-in-out pointer-events-none"
+                style={{ opacity: controlsVisible ? 1 : 0 }}
+            >
                 {formatTime(duration)}
             </div>
 
-            {/* ═══ Playhead Track — full width invisible hit area ═══ */}
+            {/* ═══ Vertical Playhead Line (hover only) ═══ */}
             <div
-                className="pointer-events-auto absolute top-0 bottom-0 left-0 right-0 cursor-col-resize"
-                style={{ width: "100%", zIndex: -1 }}
-                onClick={handleTrackClick}
-            />
-
-            {/* ═══ Vertical Playhead Line — magnetic, wide hit area ═══ */}
-            <div
-                className="pointer-events-auto absolute top-0 bottom-0 group"
+                className="fixed top-0 bottom-0 z-[56] group pointer-events-auto"
                 style={{
                     left: `${progress * 100}%`,
-                    transition: isDragging ? "none" : "left 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                    transition: isDragging
+                        ? "none"
+                        : "left 0.15s linear",
                     width: "48px",
                     marginLeft: "-24px",
                     cursor: isDragging ? "grabbing" : "grab",
+                    opacity: controlsVisible ? 1 : 0,
+                    pointerEvents: controlsVisible ? "auto" : "none",
                 }}
                 onMouseDown={handleMouseDown}
             >
-                {/* The visible line */}
                 <div
                     className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 transition-all duration-500 ease-in-out"
                     style={{
@@ -154,7 +163,6 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
                             : "rgba(255, 255, 255, 0.15)",
                     }}
                 />
-                {/* Hover glow — magnetic feel */}
                 <div
                     className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out"
                     style={{
@@ -163,9 +171,7 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
                         boxShadow: "0 0 12px 4px rgba(244, 114, 182, 0.15)",
                     }}
                 />
-                {/* Invisible magnetic grab zone */}
-                <div className="absolute inset-0" />
             </div>
-        </div>
+        </>
     );
 }

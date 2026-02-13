@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
  * WebGL Fluid / Smoke simulation adapted from a CodePen.
  * Forced to pink-only splat colors.
  */
-export function SmokeCanvas() {
+export function SmokeCanvas({ isActive = true }: { isActive?: boolean }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animRef = useRef<number>(0);
 
