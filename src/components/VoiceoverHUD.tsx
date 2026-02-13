@@ -13,7 +13,6 @@ function formatTime(seconds: number): string {
 }
 
 export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverHUDProps) {
-    const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -22,8 +21,9 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
     const dragRef = useRef(false);
     const rafRef = useRef<number>(0);
     const idleTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const playheadRef = useRef<HTMLDivElement>(null);
 
-    // Auto-hide playhead/timecodes after 5s of no mouse movement
+    // Auto-hide playhead/timecodes after 2s of no mouse movement
     useEffect(() => {
         const handleMouseMove = () => {
             setIsHovered(true);
@@ -39,7 +39,7 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
         };
     }, []);
 
-    // Poll audio state via rAF
+    // Poll audio state via rAF — update playhead via DOM directly for smoothness
     const tick = useCallback(() => {
         const audio = audioRef.current;
         if (audio && !dragRef.current) {
@@ -47,8 +47,13 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
             const cur = audio.currentTime || 0;
             setCurrentTime(cur);
             setDuration(dur);
-            setProgress(dur > 0 ? cur / dur : 0);
             setIsPlaying(!audio.paused && !audio.ended);
+
+            // Direct DOM update for playhead — avoids React re-render lag
+            if (playheadRef.current) {
+                const pct = dur > 0 ? (cur / dur) * 100 : 0;
+                playheadRef.current.style.left = `${pct}%`;
+            }
         }
         rafRef.current = requestAnimationFrame(tick);
     }, [audioRef]);
@@ -73,8 +78,11 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
         if (!audio || !audio.duration) return;
         const frac = Math.max(0, Math.min(1, clientX / window.innerWidth));
         audio.currentTime = frac * audio.duration;
-        setProgress(frac);
         setCurrentTime(audio.currentTime);
+        // Direct DOM update during drag — no React re-render
+        if (playheadRef.current) {
+            playheadRef.current.style.left = `${frac * 100}%`;
+        }
     }, [audioRef]);
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -138,24 +146,23 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
                 {formatTime(duration)}
             </div>
 
-            {/* ═══ Vertical Playhead Line (hover only) ═══ */}
+            {/* ═══ Vertical Playhead Line (hover only, DOM-driven position) ═══ */}
             <div
+                ref={playheadRef}
                 className="fixed top-0 bottom-0 z-[56] group pointer-events-auto"
                 style={{
-                    left: `${progress * 100}%`,
-                    transition: isDragging
-                        ? "none"
-                        : "left 0.15s linear",
+                    left: "0%",
                     width: "48px",
                     marginLeft: "-24px",
                     cursor: isDragging ? "grabbing" : "grab",
                     opacity: controlsVisible ? 1 : 0,
                     pointerEvents: controlsVisible ? "auto" : "none",
+                    transition: "opacity 0.5s ease-in-out",
                 }}
                 onMouseDown={handleMouseDown}
             >
                 <div
-                    className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 transition-all duration-500 ease-in-out"
+                    className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 transition-all duration-300 ease-in-out"
                     style={{
                         width: isDragging ? "2px" : "1px",
                         backgroundColor: isDragging
@@ -164,7 +171,7 @@ export function VoiceoverHUD({ audioRef, globalMuted, onToggleMute }: VoiceoverH
                     }}
                 />
                 <div
-                    className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out"
+                    className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out"
                     style={{
                         width: "4px",
                         backgroundColor: "rgba(244, 114, 182, 0.4)",

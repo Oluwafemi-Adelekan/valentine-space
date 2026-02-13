@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 import mem1 from "../assets/Memory 1.jpg";
@@ -15,8 +16,42 @@ import mem11 from "../assets/Memory 11.jpg";
 const MEMORIES = [mem1, mem2, mem3, mem4, mem5, mem6, mem7, mem8, mem9, mem10, mem11];
 
 export function MemoriesTicker() {
-    // Double the array for seamless infinite loop
-    const doubled = [...MEMORIES, ...MEMORIES];
+    // Triple the array for truly seamless infinite loop — no visible gap
+    const tripled = [...MEMORIES, ...MEMORIES, ...MEMORIES];
+    const [activeIndex, setActiveIndex] = useState(-1);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // On mobile, detect which image is in the center of the viewport
+    useEffect(() => {
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+        if (!isMobile) return;
+
+        const container = containerRef.current;
+        if (!container) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                let bestEntry: IntersectionObserverEntry | null = null;
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        if (!bestEntry || entry.intersectionRatio > bestEntry.intersectionRatio) {
+                            bestEntry = entry;
+                        }
+                    }
+                }
+                if (bestEntry) {
+                    const idx = Number((bestEntry.target as HTMLElement).dataset.idx);
+                    if (!isNaN(idx)) setActiveIndex(idx);
+                }
+            },
+            { root: null, threshold: [0.5, 0.75, 1.0] }
+        );
+
+        const items = container.querySelectorAll("[data-idx]");
+        items.forEach((item) => observer.observe(item));
+
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <section className="h-screen bg-black overflow-hidden relative flex flex-col justify-center py-20 z-40">
@@ -26,6 +61,7 @@ export function MemoriesTicker() {
 
             <div className="flex w-full">
                 <motion.div
+                    ref={containerRef}
                     className="flex gap-8 items-center px-4"
                     animate={{ x: [0, -(MEMORIES.length * 320)] }}
                     transition={{
@@ -33,9 +69,9 @@ export function MemoriesTicker() {
                         duration: 60,
                         ease: "linear",
                     }}
+                    style={{ willChange: "transform" }}
                 >
-                    {doubled.map((src, i) => {
-                        // Varied sizes: cycle through 3 size classes for visual rhythm
+                    {tripled.map((src, i) => {
                         const sizeClass =
                             i % 3 === 0
                                 ? "w-[300px] h-[533px]"
@@ -43,15 +79,20 @@ export function MemoriesTicker() {
                                     ? "w-[250px] h-[444px]"
                                     : "w-[350px] h-[622px]";
 
+                        const isMobileActive = activeIndex === i;
+
                         return (
                             <div
                                 key={i}
-                                className={`${sizeClass} flex-shrink-0 overflow-hidden grayscale hover:grayscale-0 transition-all duration-500 transform hover:scale-105 border border-white/10`}
+                                data-idx={i}
+                                className={`${sizeClass} flex-shrink-0 overflow-hidden transition-all duration-700 transform hover:scale-105 border border-white/10 ${isMobileActive ? "grayscale-0" : "grayscale hover:grayscale-0"
+                                    }`}
                             >
                                 <img
                                     src={src}
                                     alt={`Memory ${(i % MEMORIES.length) + 1}`}
                                     className="w-full h-full object-cover"
+                                    loading="lazy"
                                 />
                             </div>
                         );

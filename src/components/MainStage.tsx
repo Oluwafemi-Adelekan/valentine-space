@@ -9,6 +9,7 @@ export function MainStage() {
                 <video
                     src={heroVideo}
                     autoPlay loop muted playsInline
+                    preload="auto"
                     className="w-full h-full object-cover"
                     style={{ transform: "scale(1.08)", transformOrigin: "center center" }}
                 />
