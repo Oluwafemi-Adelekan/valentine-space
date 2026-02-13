@@ -107,7 +107,13 @@ function App() {
         };
 
         let touchStartY = 0;
-        const handleTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
+        const handleTouchStart = (e: TouchEvent) => {
+            touchStartY = e.touches[0].clientY;
+        };
+        const handleTouchMove = (e: TouchEvent) => {
+            // Prevent native scroll & pull-to-refresh — our section snap handles navigation
+            e.preventDefault();
+        };
         const handleTouchEnd = (e: TouchEvent) => {
             if (isAnimating.current) return;
             const diff = touchStartY - e.changedTouches[0].clientY;
@@ -124,11 +130,13 @@ function App() {
 
         window.addEventListener("wheel", handleWheel, { passive: false });
         window.addEventListener("touchstart", handleTouchStart, { passive: true });
+        window.addEventListener("touchmove", handleTouchMove, { passive: false });
         window.addEventListener("touchend", handleTouchEnd, { passive: true });
         window.addEventListener("keydown", handleKeyDown);
         return () => {
             window.removeEventListener("wheel", handleWheel);
             window.removeEventListener("touchstart", handleTouchStart);
+            window.removeEventListener("touchmove", handleTouchMove);
             window.removeEventListener("touchend", handleTouchEnd);
             window.removeEventListener("keydown", handleKeyDown);
             clearTimeout(accumulatorTimer.current);

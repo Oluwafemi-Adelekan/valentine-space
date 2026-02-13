@@ -1,13 +1,11 @@
-import heroVideo from "../assets/Hero video.mp4";
-
 export function MainStage() {
     return (
         <div className="relative h-screen w-full overflow-hidden bg-black">
-            {/* Video Background — set to 108% */}
+            {/* Video Background — set to 108%, served from /public for reliable deploy */}
             <div className="absolute inset-0">
                 <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none" />
                 <video
-                    src={heroVideo}
+                    src="/hero-video.mp4"
                     autoPlay loop muted playsInline
                     preload="auto"
                     className="w-full h-full object-cover"

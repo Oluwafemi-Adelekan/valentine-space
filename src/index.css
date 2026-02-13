@@ -12,9 +12,15 @@
   background-color: #000;
 }
 
+html,
+body {
+  overscroll-behavior: none;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  touch-action: none;
 }
 
 @keyframes scroll {
@@ -22,6 +28,7 @@ body {
     transform: translateY(0);
     opacity: 1;
   }
+
   100% {
     transform: translateY(12px);
     opacity: 0;
