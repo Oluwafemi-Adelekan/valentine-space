@@ -206,12 +206,12 @@ function App() {
                         {/* Sections Container */}
                         <div
                             className="w-full transition-transform duration-700 ease-in-out will-change-transform"
-                            style={{ transform: `translateY(-${current * 100}vh)` }}
+                            style={{ transform: `translateY(-${current * 100}dvh)` }}
                         >
                             {SECTION_AUDIO.map((src, i) => (
-                                <div key={i} className="h-screen w-full relative">
+                                <div key={i} className="h-[100dvh] w-full relative">
                                     {i === 0 && <MainStage />}
-                                    {i === 1 && (current === 1 ? <QuoteSection /> : <div className="h-screen w-full bg-black" />)}
+                                    {i === 1 && (current === 1 ? <QuoteSection /> : <div className="h-[100dvh] w-full bg-black" />)}
                                     {i === 2 && <GuySection />}
                                     {i === 3 && <MemoriesTicker />}
                                     <SectionVoiceover

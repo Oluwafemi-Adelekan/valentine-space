@@ -7,7 +7,7 @@ export function QuoteSection() {
     const words = quote.split(" ");
 
     return (
-        <section className="h-screen w-full flex items-center justify-center bg-black relative overflow-hidden">
+        <section className="h-[100dvh] w-full flex items-center justify-center bg-black relative overflow-hidden">
             {/* WebGL Smoke Background */}
             <SmokeCanvas />
 

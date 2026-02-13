@@ -3,7 +3,7 @@ import coolGuyImg from "../assets/Cool guy.jpg";
 
 export function GuySection() {
     return (
-        <section className="h-screen flex items-center justify-center bg-black relative overflow-hidden">
+        <section className="h-[100dvh] flex items-center justify-center bg-black relative overflow-hidden">
             {/* Background Gradients */}
             <div className="absolute top-0 right-0 w-1/2 h-full bg-pink-900/10 blur-[120px]" />
             <div className="absolute bottom-0 left-0 w-1/2 h-full bg-purple-900/10 blur-[120px]" />

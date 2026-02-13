@@ -54,7 +54,7 @@ export function MemoriesTicker() {
     }, []);
 
     return (
-        <section className="h-screen bg-black overflow-hidden relative flex flex-col justify-center py-20 z-40">
+        <section className="h-[100dvh] bg-black overflow-hidden relative flex flex-col justify-center py-20 z-40">
             {/* Edge gradients for seamless fade */}
             <div className="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-black to-transparent z-10" />
             <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-black to-transparent z-10" />

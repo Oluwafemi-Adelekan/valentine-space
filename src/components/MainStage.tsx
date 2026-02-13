@@ -1,6 +1,6 @@
 export function MainStage() {
     return (
-        <div className="relative h-screen w-full overflow-hidden bg-black">
+        <div className="relative h-[100dvh] w-full overflow-hidden bg-black">
             {/* Video Background — Streamable embed, scaled to 108% (intentional) */}
             <div className="absolute inset-0">
                 <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none" />
